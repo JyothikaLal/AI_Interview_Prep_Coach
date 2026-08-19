@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Coach</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .question-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .question-label {
+            color: #667eea;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        
+        #currentQuestion {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #recordBtn {
+            background: #667eea;
+            color: white;
+        }
+        
+        #recordBtn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        #recordBtn.recording {
+            background: #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+        
+        #submitBtn {
+            background: #10b981;
+            color: white;
+        }
+        
+        #submitBtn:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        #submitBtn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+        
+        #startBtn {
+            background: #764ba2;
+            color: white;
+        }
+        
+        #startBtn:hover {
+            background: #6a3e9a;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);
+        }
+        
+        .status {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 12px;
+            border-radius: 4px;
+            color: #1e40af;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        #feedback {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            color: #92400e;
+            line-height: 1.6;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #transcript {
+            background: #e8f5ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            color: #0c4a6e;
+            line-height: 1.6;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        
+        .score {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .timer {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .mic-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #ecfeff;
+            border-left: 4px solid #06b6d4;
+            color: #0e7490;
+        }
+
+        .mic-status.error {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+            color: #991b1b;
+        }
+        
+        #sessionStatus {
+            font-size: 12px;
+            color: #999;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 AI Interview Coach</h1>
+        <p class="subtitle">Practice your interview answers with AI feedback</p>
+        
+        <div id="initialScreen">
+            <button id="startBtn">Start Interview Session</button>
+            <p style="text-align: center; color: #999; margin-top: 20px; font-size: 14px;">
+                💡 You'll answer up to 4 questions. The AI will focus on areas where you need improvement.
+            </p>
+        </div>
+        
+        <div id="interviewScreen" class="hidden">
+            <div id="statusDiv" class="status hidden"></div>
+            
+            <div class="question-section">
+                <div class="question-label">Current Question</div>
+                <div id="currentQuestion"></div>
+            </div>
+            
+            <div class="controls">
+                <button id="recordBtn">🔴 Start Recording</button>
+                <button id="submitBtn" disabled>✓ Submit Answer</button>
+            </div>
+            
+            <div class="timer" id="timer"></div>
+            <div class="mic-status" id="micStatus">Mic check: Waiting for session start.</div>
+
+            <div id="transcript" class="hidden"></div>
+            
+            <div id="feedback" class="hidden"></div>
+            
+            <div id="sessionStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let sessionId = null;
+        let recordingTime = 0;
+        let timerInterval = null;
+        let recordedMimeType = '';
+
+        const recordBtn = document.getElementById('recordBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const startBtn = document.getElementById('startBtn');
+        const currentQuestion = document.getElementById('currentQuestion');
+        const transcript = document.getElementById('transcript');
+        const feedback = document.getElementById('feedback');
+        const timer = document.getElementById('timer');
+        const micStatus = document.getElementById('micStatus');
+        const sessionStatus = document.getElementById('sessionStatus');
+        const statusDiv = document.getElementById('statusDiv');
+
+        function updateMicStatus(message, isError = false) {
+            micStatus.textContent = message;
+            micStatus.classList.toggle('error', isError);
+        }
+
+        // Start interview session
+        startBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/session/start', { method: 'POST' });
+                const data = await response.json();
+                sessionId = data.session_id;
+                currentQuestion.textContent = data.next_question;
+                
+                document.getElementById('initialScreen').classList.add('hidden');
+                document.getElementById('interviewScreen').classList.remove('hidden');
+                transcript.classList.add('hidden');
+                transcript.textContent = '';
+                feedback.classList.add('hidden');
+                feedback.textContent = '';
+                
+                // Request microphone access
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const preferredMimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+                const selectedMimeType = preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported(type));
+                mediaRecorder = selectedMimeType ? new MediaRecorder(stream, { mimeType: selectedMimeType }) : new MediaRecorder(stream);
+                recordedMimeType = mediaRecorder.mimeType || selectedMimeType || 'audio/webm';
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const totalBytes = audioChunks.reduce((sum, chunk) => sum + chunk.size, 0);
+                    submitBtn.disabled = totalBytes === 0;
+                    if (totalBytes > 0) {
+                        updateMicStatus(`Mic check: OK. Captured ${(totalBytes / 1024).toFixed(1)} KB audio.`);
+                        updateStatus('Recording stopped. Review and submit when ready.');
+                    } else {
+                        updateMicStatus('Mic check: No audio captured. Check browser mic permission and selected input device.', true);
+                        updateStatus('Recording stopped, but no audio data was captured.');
+                    }
+                };
+                
+                updateStatus('Ready to record. Click "Start Recording" when ready.');
+                updateMicStatus('Mic check: Access granted. Record 2-3 seconds and stop to verify capture.');
+            } catch (error) {
+                updateMicStatus('Mic check failed: ' + error.message, true);
+                alert('Error starting session: ' + error.message);
+            }
+        });
+
+        // Record audio
+        recordBtn.addEventListener('click', () => {
+            if (!mediaRecorder) {
+                updateMicStatus('Mic check: Please start a session first so microphone access can be requested.', true);
+                return;
+            }
+
+            if (!isRecording) {
+                audioChunks = [];
+                recordingTime = 0;
+                submitBtn.disabled = true;
+                mediaRecorder.start();
+                recordBtn.textContent = '⏹ Stop Recording';
+                recordBtn.classList.add('recording');
+                isRecording = true;
+                startTimer();
+                updateStatus('Recording... Speak naturally and take your time.');
+            } else {
+                mediaRecorder.stop();
+                recordBtn.textContent = '🔴 Start Recording';
+                recordBtn.classList.remove('recording');
+                isRecording = false;
+                clearInterval(timerInterval);
+                timer.textContent = '';
+                updateStatus('Finalizing recording...');
+            }
+        });
+
+        // Submit answer
+        submitBtn.addEventListener('click', async () => {
+            if (audioChunks.length === 0) {
+                alert('Please record an answer first');
+                return;
+            }
+            
+            const blobType = recordedMimeType || (audioChunks[0] && audioChunks[0].type) || 'audio/webm';
+            const fileExt = blobType.includes('ogg') ? 'ogg' : (blobType.includes('mp4') ? 'mp4' : 'webm');
+            const audioBlob = new Blob(audioChunks, { type: blobType });
+            const formData = new FormData();
+            formData.append('session_id', sessionId);
+            formData.append('audio', audioBlob, `answer.${fileExt}`);
+            
+            try {
+                updateStatus('Analyzing your answer...');
+                recordBtn.disabled = true;
+                submitBtn.disabled = true;
+                
+                const response = await fetch('/session/answer', {
+                    method: 'POST',
+                    body: formData
+                });
+                const contentType = response.headers.get('content-type') || '';
+                let data;
+                if (contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const rawBody = await response.text();
+                    throw new Error(`Server returned non-JSON response: ${rawBody.slice(0, 180)}`);
+                }
+
+                if (!response.ok) {
+                    throw new Error(data.error || `Request failed with status ${response.status}`);
+                }
+
+                if (data.last_result && data.last_result.transcript) {
+                    transcript.innerHTML = '<strong>Your Transcribed Answer</strong>\n\n' + data.last_result.transcript;
+                    transcript.classList.remove('hidden');
+                }
+                
+                // Display feedback
+                if (data.last_result && data.last_result.feedback) {
+                    feedback.textContent = data.last_result.feedback;
+                    if (data.last_result.score) {
+                        feedback.innerHTML = `<span class="score">Score: ${data.last_result.score}/10</span>\n\n` + feedback.textContent;
+                    }
+                    feedback.classList.remove('hidden');
+                }
+                
+                if (data.done) {
+                    sessionStatus.innerHTML = '<strong>Interview Complete!</strong><br>' + 
+                                            data.report.replace(/\n/g, '<br>').replace(/##/g, '<strong>').replace(/\*\*/g, '</strong>');
+                    recordBtn.disabled = true;
+                    submitBtn.disabled = true;
+                    recordBtn.textContent = '✓ Interview Completed';
+                } else {
+                    // Move to next question
+                    currentQuestion.textContent = data.next_question;
+                    audioChunks = [];
+                    recordBtn.disabled = false;
+                    recordBtn.textContent = '🔴 Start Recording';
+                    updateStatus('Ready for next question.');
+                }
+            } catch (error) {
+                updateMicStatus('Mic check: Recording exists, but backend failed. See error and terminal logs.', true);
+                alert('Error submitting answer: ' + error.message);
+                recordBtn.disabled = false;
+                submitBtn.disabled = false;
+            }
+        });
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                recordingTime++;
+                const minutes = Math.floor(recordingTime / 60);
+                const seconds = recordingTime % 60;
+                timer.textContent = `Recording: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function updateStatus(message) {
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
